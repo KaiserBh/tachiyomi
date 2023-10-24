@@ -439,16 +439,31 @@ object SettingsBackupAndSyncScreen : SearchableSettings {
     private fun getGoogleDrivePreferences(): List<Preference> {
         val context = LocalContext.current
         val googleDriveSync = Injekt.get<GoogleDriveService>()
-        return listOf(
-            Preference.PreferenceItem.TextPreference(
-                title = stringResource(R.string.pref_google_drive_sign_in),
-                onClick = {
-                    val intent = googleDriveSync.getSignInIntent()
-                    context.startActivity(intent)
-                },
-            ),
-            getGoogleDrivePurge(),
-        )
+        var googleDriveServiceState by remember { googleDriveSync.signedIn }
+
+        if (googleDriveServiceState) {
+            return listOf(
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(R.string.pref_google_drive_change_account),
+                    onClick = {
+                        val intent = googleDriveSync.getSignInIntent()
+                        context.startActivity(intent)
+                    },
+                ),
+
+                getGoogleDrivePurge(),
+            )
+        } else {
+            return listOf(
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(R.string.pref_google_drive_sign_in),
+                    onClick = {
+                        val intent = googleDriveSync.getSignInIntent()
+                        context.startActivity(intent)
+                    },
+                ),
+            )
+        }
     }
 
     @Composable

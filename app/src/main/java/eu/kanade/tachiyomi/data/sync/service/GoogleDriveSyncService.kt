@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import com.google.api.client.auth.oauth2.TokenResponseException
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest
@@ -163,6 +164,8 @@ class GoogleDriveService(private val context: Context) {
     }
     private val syncPreferences = Injekt.get<SyncPreferences>()
 
+    var signedIn = mutableStateOf(false)
+
     init {
         initGoogleDriveService()
     }
@@ -276,6 +279,7 @@ class GoogleDriveService(private val context: Context) {
      * @param refreshToken The refresh token obtained from the SyncPreferences.
      */
     private fun setupGoogleDriveService(accessToken: String, refreshToken: String) {
+        signedIn.value = true
         val jsonFactory: JsonFactory = JacksonFactory.getDefaultInstance()
         val secrets = GoogleClientSecrets.load(
             jsonFactory,
