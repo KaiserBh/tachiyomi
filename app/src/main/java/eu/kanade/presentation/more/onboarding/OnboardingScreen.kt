@@ -34,6 +34,7 @@ fun OnboardingScreen(
     var currentStep by rememberSaveable { mutableIntStateOf(0) }
     val steps = remember {
         listOf(
+            PrivacyPolicyStep(),
             ThemeStep(),
             StorageStep(),
             PermissionStep(),
@@ -42,7 +43,7 @@ fun OnboardingScreen(
     }
     val isLastStep = currentStep == steps.lastIndex
 
-    BackHandler(enabled = currentStep != 0, onBack = { currentStep-- })
+    BackHandler(enabled = currentStep != 1, onBack = { currentStep-- })
 
     InfoScreen(
         icon = Icons.Outlined.RocketLaunch,
