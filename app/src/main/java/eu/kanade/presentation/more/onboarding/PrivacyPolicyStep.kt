@@ -14,16 +14,15 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Text
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
@@ -54,11 +54,12 @@ class PrivacyPolicyStep : OnboardingStep {
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier
-                .height(500.dp)
-                .padding(16.dp)
-                .verticalScroll(scrollState)) {
-
+            Box(
+                modifier = Modifier
+                    .height(500.dp)
+                    .padding(16.dp)
+                    .verticalScroll(scrollState),
+            ) {
                 Column {
                     PrivacyPolicyIntro()
                     PrivacyInformationCollectionUse()
@@ -71,7 +72,7 @@ class PrivacyPolicyStep : OnboardingStep {
                     .fillMaxWidth()
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     stringResource(resource = MR.strings.onboarding_privacy_agree_to_terms),
@@ -85,7 +86,7 @@ class PrivacyPolicyStep : OnboardingStep {
                     onCheckedChange = {
                         isAgreed = it
                         _isComplete = it
-                    }
+                    },
                 )
             }
         }
@@ -96,7 +97,7 @@ class PrivacyPolicyStep : OnboardingStep {
         Text(
             modifier = modifier,
             text = text,
-            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
         )
     }
 
@@ -105,7 +106,7 @@ class PrivacyPolicyStep : OnboardingStep {
         Text(
             modifier = modifier,
             text = text,
-            style = TextStyle(fontSize = 16.sp)
+            style = TextStyle(fontSize = 16.sp),
         )
     }
 
@@ -120,7 +121,7 @@ class PrivacyPolicyStep : OnboardingStep {
     }
 
     @Composable
-    fun BulletPoint(text: String, url: String, modifier: Modifier= Modifier) {
+    fun BulletPoint(text: String, url: String, modifier: Modifier = Modifier) {
         val uriHandler = LocalUriHandler.current
 
         val annotatedString = buildAnnotatedString {
@@ -131,7 +132,7 @@ class PrivacyPolicyStep : OnboardingStep {
                 tag = "URL",
                 annotation = url,
                 start = 2,
-                end = 2 + text.length
+                end = 2 + text.length,
             )
         }
 
@@ -144,7 +145,7 @@ class PrivacyPolicyStep : OnboardingStep {
                         uriHandler.openUri(annotation.item)
                     }
             },
-            style = TextStyle(fontSize = 16.sp)
+            style = TextStyle(fontSize = 16.sp),
         )
     }
 
@@ -173,7 +174,7 @@ class PrivacyPolicyStep : OnboardingStep {
                         uriHandler.openUri(annotation.item)
                     }
             },
-            style = TextStyle(fontSize = 16.sp)
+            style = TextStyle(fontSize = 16.sp),
         )
     }
 
@@ -206,7 +207,7 @@ class PrivacyPolicyStep : OnboardingStep {
             BodyText(stringResource(resource = MR.strings.onboarding_privacy_information_collection_use_intro))
             Spacer(10)
 
-            BodyText( stringResource(resource = MR.strings.onboarding_privacy_information_collection_use_data))
+            BodyText(stringResource(resource = MR.strings.onboarding_privacy_information_collection_use_data))
             Spacer(10)
 
             BulletPoint("Sentry", "https://sentry.io/privacy/")
