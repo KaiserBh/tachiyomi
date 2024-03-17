@@ -183,6 +183,10 @@
     <string name="library_group_updates_global">Always launch global updates</string>
     <string name="library_group_updates_all_but_ungrouped">Launch global updates only for ungrouped, category updates for others</string>
     <string name="library_group_updates_all">Launch category updates all the time</string>
+    <string name="pref_mark_read_dupe_chapters">Mark duplicate chapters as read</string>
+    <string name="pref_mark_read_dupe_chapters_summary">Mark duplicate chapters as read after reading</string>
+    <string name="pref_library_mark_duplicate_chapters">Mark new duplicate chapters as read</string>
+    <string name="pref_library_mark_duplicate_chapters_summary">Automatically mark new chapters as read if it has been read before</string>
 
     <!-- Browse settings -->
     <string name="pref_hide_feed">Hide Feed tab</string>
@@ -324,9 +328,13 @@
     <string name="pref_center_margin">Center margin type</string>
     <string name="pref_center_margin_summary">Insert spacer to accommodate deadspace on foldable devices.</string>
 
-    <!-- Cache archived manga to disk -->
-    <string name="cache_archived_manga_to_disk">Cache images inside CBZ/CBR archives on disk</string>
-    <string name="cache_archived_manga_to_disk_subtitle">Temporarily copy images inside comic book archives to disk while reading \nMay improve reader performance</string>
+    <!-- Archive reader mode -->
+    <string name="archive_mode_load_from_file">Load from file</string>
+    <string name="archive_mode_load_into_memory">Load into memory</string>
+    <string name="archive_mode_cache_to_disk">Copy to disk</string>
+    <string name="pref_archive_reader_mode">Archive reader mode</string>
+    <string name="pref_archive_reader_mode_summary">The way in which images inside archives, such as CBZ or CBR, are being loaded</string>
+
 
     <!-- Entry Page -->
     <!-- Entry Info -->
