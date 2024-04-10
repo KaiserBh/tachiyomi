@@ -6,7 +6,7 @@ import eu.kanade.domain.sync.SyncPreferences
 import eu.kanade.tachiyomi.data.backup.create.BackupCreator
 import eu.kanade.tachiyomi.data.backup.create.BackupOptions
 import eu.kanade.tachiyomi.data.backup.models.Backup
-import eu.kanade.tachiyomi.data.backup.models.BackupChapter
+import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupManga
 import eu.kanade.tachiyomi.data.backup.models.BackupSerializer
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreJob
@@ -20,7 +20,6 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import logcat.LogPriority
 import logcat.logcat
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.data.Chapters
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.data.manga.MangaMapper.mapManga
 import tachiyomi.domain.category.interactor.GetCategories
@@ -166,7 +165,7 @@ class SyncManager(
             return
         }
 
-        val (filteredFavorites, nonFavorites) = filterFavoritesAndNonFavorites(remoteBackup)
+        val (filteredFavorites, nonFavorites) = filterFavoritesAndNonFavorites(remoteBackup, remoteBackup.backupCategories)
         updateNonFavorites(nonFavorites)
 
         val newSyncData = backup.copy(
@@ -236,45 +235,6 @@ class SyncManager(
         return handler.awaitList { mangasQueries.getMangasWithFavoriteTimestamp(::mapManga) }
     }
 
-    private suspend fun isMangaDifferent(localManga: Manga, remoteManga: BackupManga): Boolean {
-        val localChapters = handler.await { chaptersQueries.getChaptersByMangaId(localManga.id, 0).executeAsList() }
-        val localCategories = getCategories.await(localManga.id).map { it.order }
-
-        if (areChaptersDifferent(localChapters, remoteManga.chapters)) {
-            return true
-        }
-
-        if (localManga.version != remoteManga.version) {
-            return true
-        }
-
-        if (localCategories.toSet() != remoteManga.categories.toSet()) {
-            return true
-        }
-
-        return false
-    }
-
-    private fun areChaptersDifferent(localChapters: List<Chapters>, remoteChapters: List<BackupChapter>): Boolean {
-        val localChapterMap = localChapters.associateBy { it.url }
-        val remoteChapterMap = remoteChapters.associateBy { it.url }
-
-        if (localChapterMap.size != remoteChapterMap.size) {
-            return true
-        }
-
-        for ((url, localChapter) in localChapterMap) {
-            val remoteChapter = remoteChapterMap[url]
-
-            // If a matching remote chapter doesn't exist, or the version numbers are different, consider them different
-            if (remoteChapter == null || localChapter.version != remoteChapter.version) {
-                return true
-            }
-        }
-
-        return false
-    }
-
     /**
      * Filters the favorite and non-favorite manga from the backup and checks
      * if the favorite manga is different from the local database.
@@ -282,12 +242,69 @@ class SyncManager(
      * @return a Pair of lists, where the first list contains different favorite manga
      * and the second list contains non-favorite manga.
      */
-    private suspend fun filterFavoritesAndNonFavorites(backup: Backup): Pair<List<BackupManga>, List<BackupManga>> {
+    private suspend fun filterFavoritesAndNonFavorites(backup: Backup, remoteCategories: List<BackupCategory>): Pair<List<BackupManga>, List<BackupManga>> {
         val favorites = mutableListOf<BackupManga>()
         val nonFavorites = mutableListOf<BackupManga>()
         val logTag = "filterFavoritesAndNonFavorites"
 
         val elapsedTimeMillis = measureTimeMillis {
+
+            // load necessary categories data
+            val remoteCategoriesMapByOrder = remoteCategories.associateBy { it.order }
+            val localCategoriesMapById = getCategories.await().associateBy { it.id }
+            val localCategoriesGroupByMangaId = handler.awaitList {
+                mangas_categoriesQueries.getMangaIdCategoryIdPairs { mangaId, categoryId ->
+                    Pair(mangaId, localCategoriesMapById[categoryId])
+                }
+            }.groupBy({ it.first }, { it.second })
+
+            // load necessary chapters data for memory usage
+            data class NecessaryChapterInfo(val url: String, val version: Long)
+
+            val localChaptersMapByMangaId = handler.awaitList {
+                chaptersQueries.getMangaIdAndUrlAndVersionFromChapters { mangaId, url, version ->
+                    Pair(mangaId, NecessaryChapterInfo(url, version))
+                }
+            }.groupBy({ it.first }, { it.second })
+
+            fun areChaptersDifferent(localChapters: List<NecessaryChapterInfo>, remoteChapters: List<NecessaryChapterInfo>): Boolean {
+                val remoteChapterMap = remoteChapters.associateBy { it.url }
+
+                if (localChapters.map { it.url }.toSet() != remoteChapters.map { it.url }.toSet()) {
+                    return true
+                }
+
+                for (localChapter in localChapters) {
+                    val remoteChapter = remoteChapterMap[localChapter.url]
+
+                    // If a matching remote chapter doesn't exist, or the version numbers are different, consider them different
+                    if (remoteChapter == null || localChapter.version != remoteChapter.version) {
+                        return true
+                    }
+                }
+
+                return false
+            }
+
+            fun isMangaDifferent(localManga: Manga, remoteManga: BackupManga): Boolean {
+                // fast way without querying the database
+                if (localManga.version != remoteManga.version) {
+                    return true
+                }
+
+                if ((localCategoriesGroupByMangaId[localManga.id]?.mapNotNull { it?.name }?.toSet() ?: emptyList()).toSet() !=
+                    (remoteManga.categories.mapNotNull { remoteCategoriesMapByOrder[it]?.name }).toSet()
+                ) {
+                    return true
+                }
+
+                val localChapters = localChaptersMapByMangaId[localManga.id] ?: emptyList()
+                return areChaptersDifferent(
+                    localChapters,
+                    remoteManga.chapters.map { NecessaryChapterInfo(it.url, it.version) }
+                )
+            }
+
             val databaseManga = getAllMangaFromDB()
             val localMangaMap = databaseManga.associateBy {
                 Triple(it.source, it.url, it.title)
@@ -317,9 +334,9 @@ class SyncManager(
             }
         }
 
-        val minutes = elapsedTimeMillis / 60000
-        val seconds = (elapsedTimeMillis % 60000) / 1000
         logcat(LogPriority.DEBUG, logTag) {
+            val minutes = elapsedTimeMillis / 60000
+            val seconds = (elapsedTimeMillis % 60000) / 1000
             "Filtering completed in ${minutes}m ${seconds}s. Favorites found: ${favorites.size}, " +
                 "Non-favorites found: ${nonFavorites.size}"
         }

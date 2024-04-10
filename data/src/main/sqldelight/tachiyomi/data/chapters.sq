@@ -111,6 +111,10 @@ FROM (
 JOIN chapters
 ON chapters.manga_id = M.manga_id;
 
+getMangaIdAndUrlAndVersionFromChapters:
+SELECT manga_id, url, version
+FROM chapters;
+
 removeChaptersWithIds:
 DELETE FROM chapters
 WHERE _id IN :chapterIds;

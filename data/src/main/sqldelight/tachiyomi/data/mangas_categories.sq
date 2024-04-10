@@ -22,3 +22,7 @@ VALUES (:mangaId, :categoryId);
 deleteMangaCategoryByMangaId:
 DELETE FROM mangas_categories
 WHERE manga_id = :mangaId;
+
+getMangaIdCategoryIdPairs:
+SELECT manga_id, category_id
+FROM mangas_categories;
